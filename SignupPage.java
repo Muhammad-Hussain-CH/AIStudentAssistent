@@ -584,7 +584,6 @@ public class SignupPage {
         innerPanel.add(signupSpacer);
         innerPanel.add(signUpButton);
 
-//------------------------------------SignUP Buttonn--------------------
         signUpButton.addActionListener(e -> {
 
             if (usernameField.getText().isEmpty() || usernameField.getText().equals(placeholder3)) {
@@ -748,8 +747,7 @@ public class SignupPage {
 
                 try {
                     EmailSender.sendEmail(username, email, subject, body);
-                    user = new User(username, email, password);     //User class to add new user in DataBase
-//                    UserDataHandler.addUser(user);
+                    user = new User(username, email, password);
                     if (onSuccessCallback != null) {
                         onSuccessCallback.run();
                     }
@@ -771,7 +769,7 @@ public class SignupPage {
                 canDisposeSignupPage = true;
 
             } else {
-//                System.out.println("Can not Proceed");
+                
             }
 
             innerPanel.setPreferredSize(new Dimension(400, length));
@@ -812,7 +810,6 @@ public class SignupPage {
     private void updatePasswordStrength() {
         String password = passField.getText().trim();
 
-        // If password is empty or still the placeholder, skip evaluation
         if (password.isEmpty() || password.equals(placeholder2)) {
             passwordStrengthBar.setValue(0);
             passwordStrengthResultLabel.setText("");
