@@ -124,10 +124,6 @@ public class EmailVerificationPage {
         emailField.setForeground(Color.WHITE);
         emailField.setCaretColor(Color.GRAY);
         emailField.setBorder(new RoundedBorder(new Color(50, 60, 80), 10));
-//        emailField.setBorder(BorderFactory.createCompoundBorder(
-//                BorderFactory.createLineBorder(new Color(50, 60, 80)),
-//                BorderFactory.createEmptyBorder(10, 10, 10, 10)
-//        ));
         emailField.setAlignmentX(Component.CENTER_ALIGNMENT);
         emailField.setText(placeholder);
         emailField.setForeground(Color.GRAY);
@@ -167,9 +163,6 @@ public class EmailVerificationPage {
         emailValidLabel.setVisible(false);
 
         emailValidLabelPanel.add(emailValidLabel, BorderLayout.WEST);
-//        emailValidLabelPanel.setVisible(true);
-//        emailValidLabelPanel.setBackground(Color.RED);
-//        emailValidLabelPanel.setOpaque(true);
         innerPanel.add(emailValidLabelPanel);
 
         emailField.addKeyListener(new KeyAdapter() {
@@ -226,8 +219,6 @@ public class EmailVerificationPage {
         resendLabel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0)); // small left padding
 
         resendLabelPanel.add(resendLabel, BorderLayout.WEST);
-//        resendLabelPanel.setOpaque(true);
-//        resendLabelPanel.setBackground(Color.YELLOW);
         innerPanel.add(resendLabelPanel);
         innerPanel.add(Box.createVerticalStrut(5));
 
@@ -266,7 +257,6 @@ public class EmailVerificationPage {
             }
         });
 
-//        innerPanel.add(Box.createVerticalStrut(20));
         innerPanel.add(signInButton);
 
         bgPanel.setBounds(0, 0, width, height);
