@@ -1,168 +1,455 @@
 package bukc.project;
 
-import java.io.*;
+import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.time.LocalTime;
 import java.util.*;
-import static java.util.Collections.emptyList;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
-public class UserDataHandler {
+public class DashboardPage {
 
-    public static final String FILE_NAME = "users.ser";
+    private JPanel bgPanel;
 
-    public static List<User> readUsers() {
-        List<User> users = new ArrayList();
-        File file = new File(FILE_NAME);
+    private JPanel chatPanel;
 
-        if (file.exists()) {
-            try {
-                ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-                users = (List<User>) in.readObject();
-            } catch (Exception e) {
-                System.out.println("Error : " + e.getMessage());
+    private int leftPanelWidth = 200;
+
+    private boolean proceedQuestions = false;
+
+    private String placeholder = "What would you like to know? Ask a question...";
+    private String question = null;
+
+    private StringBuilder conversationContext = new StringBuilder();
+
+    private Runnable runLoginPage;
+    private Runnable runEmailInputPage;
+
+    public DashboardPage(Runnable runLoginPage, Runnable runEmailInputPage) {
+
+        this.runLoginPage = runLoginPage;
+        this.runEmailInputPage = runEmailInputPage;
+
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int width = screenSize.width;
+        int height = screenSize.height;
+
+        bgPanel = new JPanel();
+        bgPanel.setBounds(0, 0, width, height);
+        bgPanel.setPreferredSize(new Dimension(width, height));
+        bgPanel.setLayout(new BorderLayout());
+        bgPanel.setFocusable(true);
+        bgPanel.setBackground(new Color(17, 24, 40));
+        bgPanel.requestFocusInWindow();
+
+        JPanel leftPanel = new JPanel();
+        leftPanel.setPreferredSize(new Dimension(leftPanelWidth, height));
+        leftPanel.setBackground(new Color(32, 41, 56));
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        leftPanel.setBorder(BorderFactory.createMatteBorder(
+                0, 0, 0, 1, new Color(255, 255, 255, 50))
+        );
+
+//      Top title panel
+        JPanel titlePanel = new JPanel();
+        titlePanel.setMaximumSize(new Dimension(leftPanelWidth, 60));
+        titlePanel.setBackground(new Color(32, 41, 56));
+        titlePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+//        titlePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        titlePanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 20)); // left align + padding
+        titlePanel.setBorder(BorderFactory.createMatteBorder(
+                0, 0, 1, 0, new Color(255, 255, 255, 50))
+        );
+
+        JLabel appName1 = new JLabel("   AI");
+//        JLabel appName1 = new JLabel("AI");
+        appName1.setForeground(new Color(99, 102, 241));
+        appName1.setFont(new Font("Roboto", Font.BOLD, 16));
+
+        JLabel appName2 = new JLabel("Student");
+        appName2.setForeground(Color.WHITE);
+        appName2.setFont(new Font("Roboto", Font.BOLD, 16));
+
+        JLabel appName3 = new JLabel("Assistant");
+        appName3.setForeground(Color.WHITE);
+        appName3.setFont(new Font("Roboto", Font.BOLD, 16));
+
+        titlePanel.add(appName1, BorderLayout.WEST);
+        titlePanel.add(appName2, BorderLayout.WEST);
+        titlePanel.add(appName3, BorderLayout.WEST);
+        leftPanel.add(titlePanel);
+
+        JPanel leftInnerPanel = new JPanel();
+        leftInnerPanel.setBackground(new Color(32, 41, 56));
+        leftInnerPanel.setPreferredSize(new Dimension(leftPanelWidth - 50, 600));
+        leftInnerPanel.setLayout(new BoxLayout(leftInnerPanel, BoxLayout.Y_AXIS));
+        leftInnerPanel.setVisible(true);
+        leftInnerPanel.setOpaque(true);
+        leftPanel.add(leftInnerPanel, BorderLayout.CENTER);
+
+        JPanel menuItem1 = constructMenuItem("Clear Chat");
+        JPanel menuItem2 = constructMenuItem("Logout");
+        JPanel menuItem3 = constructMenuItem("Delete Account");
+
+        menuItem1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(bgPanel);
+                new ClearChatDialog(topFrame, () -> {
+                    chatPanel.removeAll();
+                    chatPanel.revalidate();
+                    chatPanel.repaint();
+                    conversationContext.setLength(0);
+                    question = null;
+                }).setVisible(true);
+
             }
-        }
-        return users;
-    }
+        });
 
-    // Save new user to the file
-    public static void addUser(User newUser) {
-        List<User> users = readUsers();
-        users.add(newUser);
-//        users(emptyList);
-
-        try {
-            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(FILE_NAME));
-            out.writeObject(users);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Validate login
-    public static boolean isValidUser(String username, String password) {
-        List<User> users = readUsers();
-
-        for (User user : users) {
-            if (user.username.equals(username) && user.password.equals(password)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    //For Email Check Exist or not 
-    public static boolean isValidEmail(String email) {
-        List<User> users = readUsers();
-
-        for (User user : users) {
-            if (user.email.equals(email)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public static boolean isValidUsername(String username) {
-        List<User> users = readUsers();
-
-        for (User user : users) {
-            if (user.username.equals(username)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public static void changePass(String email, String password) {
-        List<User> users = readUsers();
-        boolean updated = false;
-
-        for (User user : users) {
-            if (user.email.equals(email)) {
-                user.password = password;
-                updated = true;
-                break;
-            }
-        }
-        
-        if (updated) {
-            try {
-                ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(FILE_NAME));
-                out.writeObject(users);
-                out.close(); // Important to close stream
-//                System.out.println("Password updated successfully.");
-            } catch (IOException e) {
-                System.out.println("Error while updating password: " + e.getMessage());
-            }
-        }
-    }
-
-    public static boolean isPassCorrectByEmail(String email, String password) {
-        List<User> users = readUsers();
-
-        for (User user : users) {
-            if (user.email.equals(email)) {
-                return user.password.equals(password);
-            }
-        }
-
-        return false;
-    }
-
-    public static boolean isPassCorrectByUser(String username, String password) {
-        List<User> users = readUsers();
-
-        for (User user : users) {
-            if (user.username.equals(username)) {
-                return user.password.equals(password);
-            }
-        }
-
-        return false;
-    }
-
-    public static void displayUsers() {
-
-        List<User> users = new ArrayList();
-        File file = new File(FILE_NAME);
-
-        if (file.exists()) {
-            try {
-                ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-                users = (List<User>) in.readObject();
-                for (User user : users) {
-                    System.out.println("\nUsername = " + user.username);
-                    System.out.println("Email = " + user.email);
-                    System.out.println("Password = " + user.password);
+        menuItem2.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (runLoginPage != null) {
+                    runLoginPage.run();
                 }
-            } catch (Exception e) {
-                System.out.println("Error : " + e.getMessage());
             }
-        }
+        });
+
+        menuItem3.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(bgPanel); // Make sure `bgPanel` is accessible here
+
+                DeleteAccountDialog dialog = new DeleteAccountDialog(topFrame, () -> {
+                    System.out.println("Deleting account for email: " + UserSession.loggedInEmail);
+                    UserDataHandler.deleteUser(UserSession.loggedInEmail);
+                    UserSession.invokedThroughDashboard = true;
+                    if (runEmailInputPage != null) {
+                        runEmailInputPage.run();
+                    }
+                });
+
+                dialog.setVisible(true);
+            }
+        });
+
+        leftInnerPanel.add(Box.createVerticalStrut(10));
+        leftInnerPanel.add(menuItem1);
+        leftInnerPanel.add(Box.createVerticalStrut(10));
+        leftInnerPanel.add(menuItem2);
+        leftInnerPanel.add(Box.createVerticalStrut(10));
+        leftInnerPanel.add(menuItem3);
+
+        JPanel rightPanel = new JPanel();
+        rightPanel.setPreferredSize(new Dimension((width - leftPanelWidth), 200));
+        rightPanel.setBackground(new Color(17, 24, 40));
+        rightPanel.setLayout(new BorderLayout());
+
+        // Top bar (Right upper)
+        JPanel rightUpper = createGreetingBar();
+
+        // Chat Input Panel (Bottom)
+        JPanel chatInputPanel = new JPanel();
+        chatInputPanel.setLayout(new BorderLayout());
+        chatInputPanel.setPreferredSize(new Dimension(width, 80));
+        chatInputPanel.setBackground(new Color(17, 24, 40));
+        chatInputPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
+        // Input field
+        JTextField chatInputField = new JTextField(placeholder);
+        chatInputField.setFont(new Font("Roboto", Font.PLAIN, 14));
+        chatInputField.setForeground(Color.GRAY);
+        chatInputField.setBackground(new Color(32, 41, 56));
+        chatInputField.setCaretColor(Color.WHITE);
+        chatInputField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(99, 102, 241), 1),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        chatInputField.setPreferredSize(new Dimension(width - 150, 40));
+
+        // Send Button
+        JButton sendButton = new JButton("Proceed");
+        sendButton.setBackground(new Color(99, 102, 241));
+        sendButton.setForeground(Color.WHITE);
+        sendButton.setFocusPainted(false);
+        sendButton.setBorderPainted(false);
+        sendButton.setFont(new Font("Roboto", Font.BOLD, 14));
+        sendButton.setPreferredSize(new Dimension(100, 40));
+
+        // Clear placeholder on focus
+        chatInputField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (chatInputField.getText().equals(placeholder)) {
+                    chatInputField.setText("");
+                    chatInputField.setForeground(Color.WHITE);
+                }
+            }
+
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (chatInputField.getText().isEmpty()) {
+                    chatInputField.setText(placeholder);
+                    chatInputField.setForeground(Color.GRAY);
+                }
+            }
+        });
+
+        chatInputField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (chatInputField.getText().isEmpty() || chatInputField.getText().equals(placeholder)) {
+
+                } else {
+                    sendButton.setText("Ask");
+                    if (proceedQuestions) {
+                        proceedQuestions = false;
+                    }
+                }
+            }
+        });
+
+        sendButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                sendButton.setBackground(new Color(79, 70, 229)); // darker indigo
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                sendButton.setBackground(new Color(99, 102, 241));
+            }
+        });
+
+        sendButton.addActionListener(e -> {
+
+            if (!proceedQuestions && !(chatInputField.getText().equals(placeholder))) {
+
+                java.util.List<String> questions = new ArrayList<>();
+                questions.add(chatInputField.getText().trim());
+
+                for (String q : questions) {
+                    question = question + "\n" + q;
+                }
+//                System.out.println("121");
+                addUserMessage(chatInputField.getText());
+                chatInputField.setText(placeholder);
+                chatInputField.setForeground(Color.GRAY);
+                sendButton.setText("Proceed");
+                proceedQuestions = true;
+
+            } else if (question != null) {
+
+                String current = question.trim();
+
+                if (!current.isEmpty()) {
+                    // Add the user's question to the context with labeling
+                    conversationContext.append("User: ").append(current).append("\n");
+
+                    // Build final prompt with all context
+                    String finalPrompt = "You are an AI assistant. Consider the following conversation history and answer the latest question accordingly:\n\n";
+                    finalPrompt += conversationContext.toString();
+                    finalPrompt += "AI: ";
+
+                    // Send to Gemini
+                    String response = GeminiApi.getResponse(finalPrompt);
+
+                    // Add bot response to context
+                    conversationContext.append("AI: ").append(response).append("\n");
+
+                    // Display
+                    addBotMessage(response);
+                    question = null;
+                }
+
+            }
+
+        });
+
+        chatInputPanel.add(chatInputField, BorderLayout.CENTER);
+        chatInputPanel.add(sendButton, BorderLayout.EAST);
+
+        rightPanel.add(rightUpper, BorderLayout.NORTH);
+
+        setupChatArea(rightPanel);
+
+        bgPanel.add(leftPanel, BorderLayout.WEST);
+        bgPanel.add(rightPanel, BorderLayout.EAST);
+        rightPanel.add(chatInputPanel, BorderLayout.SOUTH);
+
+        chatPanel.revalidate();
+        chatPanel.repaint();
+
     }
 
-    public static void deleteAllUsers() {
+    public JPanel getMainPanel() {
+        return bgPanel;
+    }
 
-        List<User> users = new ArrayList();
-        File file = new File(FILE_NAME);
+    private void setupChatArea(JPanel rightPanel) {
+        chatPanel = new JPanel(new GridBagLayout());
+        chatPanel.setBackground(new Color(17, 24, 40));
+        chatPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        if (file.exists()) {
-            try {
-                ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-                users = (List<User>) in.readObject();
-                in.close();
+        JScrollPane scrollPane = new JScrollPane(chatPanel);
+        scrollPane.setBorder(null);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setBackground(new Color(125, 24, 40));
 
-                users.clear();
+        scrollPane.getVerticalScrollBar().setUI(new ModernScrollBarUI());
+        scrollPane.getHorizontalScrollBar().setUI(new ModernScrollBarUI());
+        scrollPane.setBorder(null);
 
-                ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
-                out.writeObject(users);
-                out.close();
+        rightPanel.add(scrollPane, BorderLayout.CENTER);
+    }
 
-                System.out.println("All users have been deleted.");
-            } catch (Exception e) {
-                System.out.println("Error : " + e.getMessage());
-            }
+    private int messageCount = 0;
+
+    public void addUserMessage(String message) {
+        addMessageBubble(message, new Color(56, 86, 160), FlowLayout.RIGHT);
+    }
+
+    public void addBotMessage(String message) {
+        addMessageBubble(message, new Color(50, 60, 80), FlowLayout.LEFT);
+    }
+
+    private void addMessageBubble(String text, Color bgColor, int alignment) {
+        JPanel bubblePanel = new JPanel(new FlowLayout(alignment, 0, 0));
+        bubblePanel.setOpaque(false);
+        bubblePanel.setBorder(new EmptyBorder(5, 10, 5, 10));
+
+        RoundedTextArea messageArea = new RoundedTextArea(text, 20, bgColor);
+        messageArea.setWrapStyleWord(true);
+        messageArea.setLineWrap(true);
+        messageArea.setEditable(false);
+        messageArea.setFocusable(false);
+        messageArea.setForeground(Color.WHITE);
+        messageArea.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        messageArea.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        messageArea.setColumns(1);
+        messageArea.setMaximumSize(new Dimension(500, Integer.MAX_VALUE));
+
+        int bubbleWidth = 500;
+        messageArea.setColumns(1);
+        messageArea.setSize(new Dimension(bubbleWidth, Short.MAX_VALUE));
+        messageArea.setPreferredSize(new Dimension(bubbleWidth, messageArea.getPreferredSize().height));
+        messageArea.setMaximumSize(new Dimension(bubbleWidth, Integer.MAX_VALUE));
+        messageArea.setMinimumSize(new Dimension(bubbleWidth, 30));
+
+        bubblePanel.add(messageArea);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = messageCount++;
+        gbc.weightx = 1;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 0, 5, 0);
+
+        chatPanel.add(bubblePanel, gbc);
+
+        chatPanel.revalidate();
+        chatPanel.repaint();
+        scrollToBottom();
+    }
+
+    private void scrollToBottom() {
+        SwingUtilities.invokeLater(() -> {
+            JScrollBar vertical = ((JScrollPane) chatPanel.getParent().getParent()).getVerticalScrollBar();
+            vertical.setValue(vertical.getMaximum());
+        });
+    }
+
+    private JPanel createGreetingBar() {
+        JPanel greetingPanel = new JPanel();
+        greetingPanel.setLayout(new BorderLayout());
+        greetingPanel.setPreferredSize(new Dimension(bgPanel.getWidth(), 60));
+        greetingPanel.setBackground(new Color(32, 41, 56)); // Same as main background
+        greetingPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(255, 255, 255, 50)), // bottom white border with transparency
+                BorderFactory.createEmptyBorder(0, 20, 0, 20) // inner padding
+        ));
+        
+        LocalTime now = LocalTime.now();
+        String greetingText;
+
+        if (now.isBefore(LocalTime.NOON)) {
+            greetingText = "Good morning, ";
+        } else if (now.isBefore(LocalTime.of(17, 0))) {
+            greetingText = "Good afternoon, ";
+        } else {
+            greetingText = "Good evening, ";
         }
+
+        JLabel greetingLabel = new JLabel(greetingText);
+        greetingLabel.setForeground(new Color(255, 255, 255, 200));
+        greetingLabel.setFont(new Font("Roboto", Font.BOLD, 16));
+
+        JLabel userNameLabel = new JLabel("Farhan");
+        userNameLabel.setText(UserSession.loggedInUsername);
+        userNameLabel.setForeground(new Color(99, 102, 241));
+        userNameLabel.setFont(new Font("Roboto", Font.BOLD, 16));
+
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 20));
+        leftPanel.setOpaque(false);
+        leftPanel.add(greetingLabel);
+        leftPanel.add(userNameLabel);
+
+        // Right: Date
+        JLabel dateLabel = new JLabel(new java.text.SimpleDateFormat("EEEE, MMMM dd, yyyy").format(new Date()));
+        dateLabel.setForeground(new Color(255, 255, 255, 180));
+        dateLabel.setFont(new Font("Roboto", Font.PLAIN, 13));
+
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 20));
+        rightPanel.setOpaque(false);
+        rightPanel.add(dateLabel);
+
+        greetingPanel.add(leftPanel, BorderLayout.WEST);
+        greetingPanel.add(rightPanel, BorderLayout.EAST);
+
+        return greetingPanel;
+    }
+
+    public JPanel constructMenuItem(String label) {
+        JPanel menuItemPanel = new RoundedPanel(10);
+        menuItemPanel.setBackground(new Color(32, 41, 56));
+        menuItemPanel.setMaximumSize(new Dimension(leftPanelWidth - 20, 40));
+        menuItemPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        menuItemPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 10));
+
+        JLabel itemIcon = new JLabel();
+        itemIcon.setMaximumSize(new Dimension(40, 40));
+        itemIcon.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+
+        JLabel menuItem = new JLabel(label);
+        menuItem.setOpaque(false);
+        menuItem.setFont(new Font("Roboto", Font.BOLD, 14));
+        menuItem.setForeground(Color.WHITE);
+        menuItem.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
+
+        // Hover effect
+        menuItemPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                menuItemPanel.setBackground(new Color(44, 55, 70));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                menuItemPanel.setBackground(new Color(32, 41, 56));
+            }
+        });
+
+        menuItemPanel.add(menuItem);
+
+        return menuItemPanel;
+    }
+
+    public void clearChat() {
+        chatPanel.removeAll();
+        chatPanel.revalidate();
+        chatPanel.repaint();
+        messageCount = 0;
+        conversationContext.setLength(0);
     }
 }
